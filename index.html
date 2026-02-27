@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>João Gomes — Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #2f3237;
+      color: #00ff88;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 14px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #terminal {
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0;
+    }
+
+    #banner-area,
+    #output {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    .input-line {
+      display: flex;
+      align-items: center;
+      padding: 4px 0 24px;
+      gap: 8px;
+    }
+
+    .prompt {
+      color: #00ff88;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    #cmd-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #00ff88;
+      font-family: inherit;
+      font-size: inherit;
+      caret-color: #00ff88;
+    }
+
+    .banner {
+      color: #519975;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .dim     { color: #005533; }
+    .bright  { color: #00ff88; }
+    .yellow  { color: #f0c040; }
+    .cyan    { color: #00ccff; }
+    .white   { color: #B89076; }
+    .red     { color: #ff4444; }
+    .grey    { color: #555555; }
+
+    a {
+      color: #00ccff;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+
+    .section-title {
+      color: #f0c040;
+      font-weight: bold;
+    }
+
+    .divider { color: #005533; }
+
+    .tagline {
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #2f3237; }
+    ::-webkit-scrollbar-thumb { background: #005533; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div id="terminal">
+  <div id="banner-area"></div>
+  <div id="output"></div>
+  <div class="input-line">
+    <span class="prompt">visitor@joaogomes.dev:~$</span>
+    <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autofocus />
+  </div>
+</div>
+
+<script>
+const terminal   = document.getElementById('terminal');
+const bannerArea = document.getElementById('banner-area');
+const output     = document.getElementById('output');
+const input      = document.getElementById('cmd-input');
+
+const PROMPT = '<span class="dim">visitor@joaogomes.dev:~$</span> ';
+let history  = [];
+let histIdx  = -1;
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+const BANNER = `<span class="tagline">joaogomes.dev  Not A Corporation. Personal website. All knights reserved.</span>
+<span class="banner">
+     ██╗ ██████╗  █████╗  ██████╗      ██████╗  ██████╗ ███╗   ███╗███████╗███████╗
+     ██║██╔═══██╗██╔══██╗██╔═══██╗    ██╔════╝ ██╔═══██╗████╗ ████║██╔════╝██╔════╝
+     ██║██║   ██║███████║██║   ██║    ██║  ███╗██║   ██║██╔████╔██║█████╗  ███████╗
+██   ██║██║   ██║██╔══██║██║   ██║    ██║   ██║██║   ██║██║╚██╔╝██║██╔══╝  ╚════██║
+╚█████╔╝╚██████╔╝██║  ██║╚██████╔╝    ╚██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗███████║
+ ╚════╝  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝      ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝ ®
+</span>
+<span class="grey">────────────────────────────────────────────────────────────────────────────────────</span>
+<span class="white">  Software Engineer  ·  Portugal  ·  <a href="https://github.com/JottaGomes" target="_blank">GitHub</a>  ·  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">LinkedIn</a></span>
+<span class="grey">────────────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="white">  Type <span class="yellow">'list'</span> to see available commands.</span>
+
+`;
+
+const COMMANDS = {
+
+  list: () => `
+<span class="section-title">Available commands:</span>
+
+  <span class="bright">whois</span>        Who is João Gomes?
+  <span class="bright">cv</span>           View curriculum vitae
+  <span class="bright">social</span>       Display social networks
+  <span class="bright">projects</span>     View coding projects
+  <span class="bright">skills</span>       Technical skills
+  <span class="bright">contact</span>      Get in touch
+  <span class="bright">history</span>      View command history
+  <span class="bright">banner</span>       Display the header
+  <span class="bright">clear</span>        Clear terminal
+  <span class="bright">list</span>         Show this help menu
+
+`,
+
+  help: () => COMMANDS.list(),
+
+  whois: () => `
+<span class="section-title">whois joaogomes</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+  Hey! I'm <span class="yellow">João Gomes</span>, a Software Engineer based in <span class="cyan">Portugal</span>.
+
+  I enjoy building robust backend systems, clean APIs,
+  and solving complex technical problems.
+
+  Passionate about clean code, distributed systems,
+  and everything in between.
+
+  Currently open to new opportunities. 🚀
+
+`,
+
+  cv: () => `
+<span class="section-title">Curriculum Vitae — João Gomes</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+<span class="yellow">EXPERIENCE</span>
+
+  <span class="bright">Software Engineer</span>
+  <span class="cyan">Company Name</span>  ·  2022 – Present  ·  Portugal
+  · Built and maintained scalable backend services
+  · Designed RESTful APIs consumed by mobile & web clients
+  · Improved system performance by 40% through optimisation
+
+  <span class="bright">Junior Software Engineer</span>
+  <span class="cyan">Company Name</span>  ·  2020 – 2022  ·  Portugal
+  · Developed microservices using Java and Spring Boot
+  · Collaborated on CI/CD pipelines and cloud deployments
+
+<span class="grey">──────────────────────────────────────────</span>
+<span class="yellow">EDUCATION</span>
+
+  <span class="bright">BSc Computer Science</span>
+  <span class="cyan">University Name</span>  ·  2017 – 2021
+
+<span class="grey">──────────────────────────────────────────</span>
+<span class="yellow">SKILLS</span>  <span class="dim">(type <span class="bright">skills</span> for full breakdown)</span>
+
+  Java · Kotlin · Spring Boot · Python · Docker
+  PostgreSQL · Kafka · Git · CI/CD · REST APIs
+
+<span class="grey">──────────────────────────────────────────</span>
+<span class="dim">  💡 Download full CV → <a href="#" target="_blank">joaogomes.dev/cv.pdf</a></span>
+
+`,
+
+  skills: () => `
+<span class="section-title">Technical Skills</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+<span class="yellow">Languages</span>
+  Java · Kotlin · Python · SQL · Bash · JavaScript
+
+<span class="yellow">Frameworks & Libraries</span>
+  Spring Boot · Hibernate · FastAPI · Node.js
+
+<span class="yellow">Databases</span>
+  PostgreSQL · MySQL · MongoDB · Redis
+
+<span class="yellow">DevOps & Cloud</span>
+  Docker · Kubernetes · GitHub Actions · GitLab CI
+  AWS · Linux
+
+<span class="yellow">Tools</span>
+  Git · IntelliJ IDEA · Postman · SoapUI · Kafka
+
+`,
+
+  social: () => `
+<span class="section-title">Social Networks</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+  <span class="yellow">GitHub</span>     →  <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a>
+
+  <span class="yellow">LinkedIn</span>   →  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">linkedin.com/in/-joao-gomes</a>
+
+`,
+
+  contact: () => `
+<span class="section-title">Contact</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+  <span class="yellow">LinkedIn</span>   →  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">linkedin.com/in/-joao-gomes</a>
+  <span class="yellow">GitHub</span>     →  <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a>
+
+  <span class="dim">Best way to reach me is via LinkedIn.</span>
+
+`,
+
+  projects: () => `
+<span class="section-title">Coding Projects</span>
+<span class="grey">──────────────────────────────────────────</span>
+
+  <span class="bright">stock-dashboard</span>
+  Real-time stock price dashboard with Finnhub API integration
+  <span class="dim">→ <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a></span>
+
+  <span class="bright">crypto-engine</span>
+  Cryptocurrency tracking and analysis engine
+  <span class="dim">→ <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a></span>
+
+  <span class="bright">bot</span>
+  Automation bot project
+  <span class="dim">→ <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a></span>
+
+  <span class="bright">standvirtual-scraper</span>
+  Car listings scraper for Standvirtual.com
+  <span class="dim">→ <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a></span>
+
+  <span class="dim">More on GitHub → <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a></span>
+
+`,
+
+  history: () => {
+    if (history.length === 0) return '\n  <span class="dim">No commands in history yet.</span>\n\n';
+    return '\n<span class="section-title">Command History</span>\n<span class="grey">──────────────────────────────</span>\n\n' +
+      history.map((c, i) => `  <span class="dim">${String(i + 1).padStart(3)}.</span>  ${c}`).join('\n') + '\n\n';
+  },
+
+  banner: () => BANNER,
+
+  clear: () => {
+    output.innerHTML = '';
+    terminal.scrollTop = 0;
+    return null;
+  },
+};
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+
+// Typewriter: walks all text nodes in a container and reveals chars quickly
+function typeReveal(container, charsPerFrame) {
+  const nodes = [];
+  (function walk(n) {
+    if (n.nodeType === Node.TEXT_NODE) {
+      const text = n.textContent;
+      if (text) { nodes.push({ n, text }); n.textContent = ''; }
+    } else {
+      n.childNodes.forEach(walk);
+    }
+  })(container);
+
+  if (!nodes.length) return;
+
+  let ni = 0, ci = 0;
+  function tick() {
+    let budget = charsPerFrame;
+    while (budget > 0 && ni < nodes.length) {
+      const { n, text } = nodes[ni];
+      const add = Math.min(budget, text.length - ci);
+      n.textContent = text.slice(0, ci + add);
+      ci += add; budget -= add;
+      if (ci >= text.length) { ni++; ci = 0; }
+    }
+    terminal.scrollTop = terminal.scrollHeight;
+    if (ni < nodes.length) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function print(html) {
+  if (html === null) return;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  output.appendChild(div);
+  typeReveal(div, 1);
+}
+
+function printLine(text) {
+  print(`<div>${text}</div>`);
+}
+
+function runCommand(raw) {
+  const cmd = raw.trim().toLowerCase();
+
+  // Echo the input line
+  if (cmd !== '') {
+    printLine(`${PROMPT}<span class="white">${escHtml(raw)}</span>`);
+  }
+
+  if (cmd === '') return;
+
+  // Track history (avoid consecutive duplicates)
+  if (history[history.length - 1] !== cmd) history.push(cmd);
+  histIdx = history.length;
+
+  if (COMMANDS[cmd]) {
+    const result = COMMANDS[cmd]();
+    if (result !== null) print(result);
+  } else {
+    printLine(`\n  <span class="red">Command not found:</span> <span class="white">${escHtml(cmd)}</span>  — type <span class="bright">list</span> for available commands.\n`);
+  }
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Input handling ────────────────────────────────────────────────────────────
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const val = input.value;
+    input.value = '';
+    histIdx = history.length;
+    runCommand(val);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx > 0) {
+      histIdx--;
+      input.value = history[histIdx] || '';
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (histIdx < history.length - 1) {
+      histIdx++;
+      input.value = history[histIdx] || '';
+    } else {
+      histIdx = history.length;
+      input.value = '';
+    }
+  }
+});
+
+// Click anywhere to focus input
+document.addEventListener('click', () => input.focus());
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+bannerArea.innerHTML = BANNER;
+typeReveal(bannerArea, 5);
+input.focus();
+</script>
+</body>
+</html>
