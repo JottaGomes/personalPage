@@ -11,7 +11,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #2f3237;
+      background: #080808;
       color: #00ff88;
       font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 14px;
@@ -19,13 +19,75 @@
       overflow: hidden;
     }
 
+    /* ── Matrix rain ── */
+    #matrix-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── CRT scanlines ── */
+    .scanlines {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.18) 2px,
+        rgba(0, 0, 0, 0.18) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Vignette ── */
+    .vignette {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.75) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── Status bar ── */
+    #status-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 26px;
+      background: rgba(0, 20, 10, 0.9);
+      border-bottom: 1px solid #003322;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 11px;
+      color: #007744;
+      letter-spacing: 0.05em;
+      z-index: 20;
+      gap: 0;
+    }
+
+    #status-bar .sb-secure  { color: #00ff88; text-shadow: 0 0 8px #00ff88; }
+    #status-bar .sb-sep     { color: #003322; margin: 0 10px; }
+    #status-bar .sb-host    { color: #00cc66; }
+    #status-bar .sb-enc     { color: #007744; }
+    #status-bar .sb-clock   { color: #00aa55; margin-left: auto; }
+
+    /* ── Terminal ── */
     #terminal {
       height: 100vh;
       overflow-y: auto;
-      padding: 24px;
-      max-width: 900px;
+      padding: 50px 24px 24px;
+      max-width: 940px;
       width: 100%;
       margin: 0;
+      position: relative;
+      z-index: 10;
     }
 
     #banner-area,
@@ -39,11 +101,10 @@
       display: flex;
       align-items: center;
       padding: 4px 0 24px;
-      gap: 8px;
+      gap: 6px;
     }
 
     .prompt {
-      color: #00ff88;
       white-space: nowrap;
       user-select: none;
     }
@@ -57,71 +118,238 @@
       font-family: inherit;
       font-size: inherit;
       caret-color: #00ff88;
+      text-shadow: 0 0 6px rgba(0,255,136,0.6);
     }
 
+    /* ── Color classes ── */
     .banner {
-      color: #519975;
+      color: #00cc66;
       font-size: 11px;
       line-height: 1.2;
+      text-shadow: 0 0 14px #00ff88, 0 0 28px rgba(0,255,136,0.3);
+      display: inline-block;
     }
 
-    .dim     { color: #005533; }
-    .bright  { color: #00ff88; }
-    .yellow  { color: #f0c040; }
-    .cyan    { color: #00ccff; }
-    .white   { color: #B89076; }
-    .red     { color: #ff4444; }
-    .grey    { color: #555555; }
+    .dim     { color: #004422; }
+    .bright  { color: #00ff88; text-shadow: 0 0 8px #00ff88; }
+    .yellow  { color: #f0c040; text-shadow: 0 0 8px rgba(240,192,64,0.8); }
+    .cyan    { color: #00ccff; text-shadow: 0 0 8px rgba(0,204,255,0.8); }
+    .white   { color: #aabbaa; }
+    .red     { color: #ff4444; text-shadow: 0 0 8px #ff4444; }
+    .grey    { color: #003322; }
 
     a {
       color: #00ccff;
       text-decoration: none;
+      text-shadow: 0 0 8px rgba(0,204,255,0.7);
     }
     a:hover { text-decoration: underline; }
 
     .section-title {
       color: #f0c040;
       font-weight: bold;
+      text-shadow: 0 0 8px rgba(240,192,64,0.8);
     }
 
-    .divider { color: #005533; }
-
     .tagline {
-      color: #6b7280;
+      color: #2a4a3a;
       font-size: 12px;
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #2f3237; }
-    ::-webkit-scrollbar-thumb { background: #005533; border-radius: 3px; }
+    /* ── Glitch animation ── */
+    @keyframes glitch-anim {
+      0%, 89%, 100% { transform: none; filter: none; opacity: 1; }
+      90%  { transform: translate(-3px, 0); filter: drop-shadow(3px 0 #ff0055); opacity: 0.95; }
+      92%  { transform: translate(3px, 0);  filter: drop-shadow(-3px 0 #00ccff); }
+      94%  { transform: translate(-2px, 1px); filter: drop-shadow(2px 0 #ff0055); }
+      96%  { transform: translate(2px, -1px); filter: none; }
+      98%  { transform: translate(0, 1px); filter: drop-shadow(0 0 4px #00ff88); opacity: 1; }
+    }
+
+    .glitching {
+      animation: glitch-anim 0.5s steps(1) forwards;
+    }
+
+    /* ── Boot screen ── */
+    #boot-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #080808;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 48px 56px;
+      transition: opacity 0.6s ease;
+    }
+
+    .boot-line {
+      opacity: 0;
+      margin: 1px 0;
+      font-size: 13px;
+      animation: boot-fadein 0.05s forwards;
+    }
+
+    @keyframes boot-fadein {
+      to { opacity: 1; }
+    }
+
+    .boot-ok    { color: #00ff88; text-shadow: 0 0 6px #00ff88; }
+    .boot-dim   { color: #005533; }
+    .boot-warn  { color: #f0c040; text-shadow: 0 0 6px #f0c040; }
+    .boot-head  { color: #444; }
+    .boot-grant { color: #00ff88; font-weight: bold; font-size: 15px; text-shadow: 0 0 16px #00ff88, 0 0 32px #00ff88; letter-spacing: 0.15em; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #080808; }
+    ::-webkit-scrollbar-thumb { background: #00aa55; border-radius: 3px; box-shadow: 0 0 6px #00ff88; }
   </style>
 </head>
 <body>
+
+<canvas id="matrix-bg"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<div id="status-bar">
+  <span class="sb-secure">◈ SECURE SHELL</span>
+  <span class="sb-sep">│</span>
+  <span class="sb-host">visitor@joaogomes.dev</span>
+  <span class="sb-sep">│</span>
+  <span class="sb-enc">ENC: AES-256-GCM</span>
+  <span class="sb-clock" id="clock">--:--:--</span>
+</div>
+
+<div id="boot-screen"></div>
 
 <div id="terminal">
   <div id="banner-area"></div>
   <div id="output"></div>
   <div class="input-line">
-    <span class="prompt">visitor@joaogomes.dev:~$</span>
-    <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autofocus />
+    <span class="prompt"><span class="dim">[</span><span class="bright">visitor</span><span class="dim">@</span><span class="cyan">joaogomes.dev</span> <span class="yellow">~</span><span class="dim">]</span><span class="bright">$</span></span>
+    <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" />
   </div>
 </div>
 
 <script>
+// ── Matrix rain ────────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('matrix-bg');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const CHARS   = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\\|{}[]!@#'.split('');
+const COL_W   = 16;
+let drops     = [];
+
+function initDrops() {
+  const cols = Math.floor(canvas.width / COL_W);
+  drops = Array.from({ length: cols }, () => Math.random() * -50);
+}
+initDrops();
+window.addEventListener('resize', initDrops);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(8, 8, 8, 0.04)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '13px JetBrains Mono';
+
+  drops.forEach((y, i) => {
+    const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+    // Lead char brighter
+    ctx.fillStyle = '#00ff88';
+    ctx.fillText(char, i * COL_W, y * COL_W);
+    // Trailing char dimmer (drawn on previous tick already faded)
+    if (y > 0) {
+      ctx.fillStyle = '#003322';
+      ctx.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * COL_W, (y - 1) * COL_W);
+    }
+    if (y * COL_W > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i] += 0.5;
+  });
+}
+
+setInterval(drawMatrix, 60);
+
+// ── Clock ──────────────────────────────────────────────────────────────────────
+
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('clock').textContent =
+    pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Boot sequence ──────────────────────────────────────────────────────────────
+
+const BOOT_LINES = [
+  { text: 'BIOS v2.4.1 · João Gomes Systems © 2025',        cls: 'boot-head' },
+  { text: 'CPU: Intel Core i9 @ 5.0GHz  |  RAM: 32768MB OK', cls: 'boot-head' },
+  { text: '',                                                  cls: '' },
+  { text: 'Initializing secure connection...       [  OK  ]', cls: 'boot-ok'  },
+  { text: 'Loading kernel modules...               [  OK  ]', cls: 'boot-ok'  },
+  { text: 'Mounting encrypted filesystem...        [  OK  ]', cls: 'boot-ok'  },
+  { text: 'Starting network services...            [  OK  ]', cls: 'boot-ok'  },
+  { text: 'Establishing VPN tunnel...              [  OK  ]', cls: 'boot-ok'  },
+  { text: 'Bypassing firewall...                   [ DONE ]', cls: 'boot-warn' },
+  { text: 'Loading personality matrix...           [  OK  ]', cls: 'boot-ok'  },
+  { text: '',                                                  cls: '' },
+  { text: '> ACCESS GRANTED. WELCOME.',                       cls: 'boot-grant' },
+];
+
+const bootScreen = document.getElementById('boot-screen');
+let   bootIdx    = 0;
+
+function showNextBootLine() {
+  if (bootIdx >= BOOT_LINES.length) {
+    setTimeout(() => {
+      bootScreen.style.opacity = '0';
+      setTimeout(() => {
+        bootScreen.style.display = 'none';
+        initTerminal();
+      }, 600);
+    }, 700);
+    return;
+  }
+
+  const { text, cls } = BOOT_LINES[bootIdx];
+  const div = document.createElement('div');
+  div.className = 'boot-line ' + cls;
+  div.textContent = text || '\u00a0';
+  bootScreen.appendChild(div);
+  bootIdx++;
+
+  setTimeout(showNextBootLine, text === '' ? 60 : 130);
+}
+
+showNextBootLine();
+
+// ── Terminal ───────────────────────────────────────────────────────────────────
+
 const terminal   = document.getElementById('terminal');
 const bannerArea = document.getElementById('banner-area');
 const output     = document.getElementById('output');
 const input      = document.getElementById('cmd-input');
 
-const PROMPT = '<span class="dim">visitor@joaogomes.dev:~$</span> ';
-let history  = [];
-let histIdx  = -1;
+const PROMPT = '<span class="dim">[</span><span class="dim">visitor</span><span class="dim">@joaogomes.dev ~]$</span> ';
+let history = [];
+let histIdx = -1;
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────────────────────────
 
 const BANNER = `<span class="tagline">joaogomes.dev  Not A Corporation. Personal website. All knights reserved.</span>
-<span class="banner">
+<span class="banner" id="banner-art">
      ██╗ ██████╗  █████╗  ██████╗      ██████╗  ██████╗ ███╗   ███╗███████╗███████╗
      ██║██╔═══██╗██╔══██╗██╔═══██╗    ██╔════╝ ██╔═══██╗████╗ ████║██╔════╝██╔════╝
      ██║██║   ██║███████║██║   ██║    ██║  ███╗██║   ██║██╔████╔██║█████╗  ███████╗
@@ -148,6 +376,7 @@ const COMMANDS = {
   <span class="bright">projects</span>     View coding projects
   <span class="bright">skills</span>       Technical skills
   <span class="bright">contact</span>      Get in touch
+  <span class="bright">download-cv</span>  Download my CV as PDF
   <span class="bright">history</span>      View command history
   <span class="bright">banner</span>       Display the header
   <span class="bright">clear</span>        Clear terminal
@@ -161,15 +390,18 @@ const COMMANDS = {
 <span class="section-title">whois joaogomes</span>
 <span class="grey">──────────────────────────────────────────</span>
 
-  Hey! I'm <span class="yellow">João Gomes</span>, a Software Engineer based in <span class="cyan">Portugal</span>.
+  Hey! I'm <span class="yellow">João Gomes</span>, a <span class="bright">Full-Stack Software Engineer</span>
+  based in <span class="cyan">Aveiro / Coimbra / Porto / Viseu</span>, Portugal.
 
-  I enjoy building robust backend systems, clean APIs,
-  and solving complex technical problems.
+  Experienced in Java (8–22), Spring Boot, microservices,
+  and frontend development with TypeScript and Angular.
 
-  Passionate about clean code, distributed systems,
-  and everything in between.
+  Worked on large-scale enterprise systems at <span class="yellow">Deloitte</span> and
+  <span class="yellow">iCligo</span>, building scalable backends, event-driven pipelines,
+  secure architectures, and production-ready applications.
 
-  Currently open to new opportunities. 🚀
+  Experienced in Agile and SAFe. Strong focus on problem-solving,
+  teamwork, and clean code.
 
 `,
 
@@ -179,31 +411,46 @@ const COMMANDS = {
 
 <span class="yellow">EXPERIENCE</span>
 
-  <span class="bright">Software Engineer</span>
-  <span class="cyan">Company Name</span>  ·  2022 – Present  ·  Portugal
-  · Built and maintained scalable backend services
-  · Designed RESTful APIs consumed by mobile & web clients
-  · Improved system performance by 40% through optimisation
+  <span class="bright">Software Developer</span>
+  <span class="cyan">iCligo</span>  ·  2025 – Present  ·  Portugal
+  · Backend services for a travel platform using Java, PostgreSQL,
+    MongoDB, Temporal, and EventStore
+  · Contributed to new features and microservice design
+  · Led a crypto-shredding–based encryption initiative for
+    security and compliance
 
-  <span class="bright">Junior Software Engineer</span>
-  <span class="cyan">Company Name</span>  ·  2020 – 2022  ·  Portugal
-  · Developed microservices using Java and Spring Boot
-  · Collaborated on CI/CD pipelines and cloud deployments
+  <span class="bright">Experienced Programmer</span>
+  <span class="cyan">Deloitte</span>  ·  2022 – 2025  ·  Portugal
+  · Built Spring Boot microservices for BMW and Mercedes
+    enterprise platforms
+  · Developed Angular/TypeScript frontend components
+  · Integrated Kafka-based event pipelines
+  · Optimised performance with PostgreSQL
+
+  <span class="bright">Project Management</span>
+  <span class="cyan">GF Cork</span>  ·  2019 – 2022  ·  Portugal
 
 <span class="grey">──────────────────────────────────────────</span>
 <span class="yellow">EDUCATION</span>
 
-  <span class="bright">BSc Computer Science</span>
-  <span class="cyan">University Name</span>  ·  2017 – 2021
+  <span class="bright">Biotechnology Master Degree</span>
+  <span class="cyan">University of Aveiro</span>  ·  2018
+
+<span class="grey">──────────────────────────────────────────</span>
+<span class="yellow">CERTIFICATIONS</span>
+
+  · AWS Certified Cloud Practitioner
+  · Google Cloud Digital Leader
+  · Oracle Cloud Infrastructure 2023 Certified Foundations Associate
 
 <span class="grey">──────────────────────────────────────────</span>
 <span class="yellow">SKILLS</span>  <span class="dim">(type <span class="bright">skills</span> for full breakdown)</span>
 
-  Java · Kotlin · Spring Boot · Python · Docker
-  PostgreSQL · Kafka · Git · CI/CD · REST APIs
+  Java · Spring Boot · TypeScript · Angular · PostgreSQL
+  MongoDB · Kafka · AWS · Docker · Agile / SAFe
 
 <span class="grey">──────────────────────────────────────────</span>
-<span class="dim">  💡 Download full CV → <a href="#" target="_blank">joaogomes.dev/cv.pdf</a></span>
+<span class="dim">  💡 Download full CV → <a href="./JoaoFGomesCV.pdf" download="JoaoFGomesCV.pdf">JoaoFGomesCV.pdf  ↓ download</a></span>
 
 `,
 
@@ -212,20 +459,21 @@ const COMMANDS = {
 <span class="grey">──────────────────────────────────────────</span>
 
 <span class="yellow">Languages</span>
-  Java · Kotlin · Python · SQL · Bash · JavaScript
+  Java (8–22) · TypeScript · JavaScript · SQL · HTML/CSS3
 
 <span class="yellow">Frameworks & Libraries</span>
-  Spring Boot · Hibernate · FastAPI · Node.js
+  Spring Boot · Spring / JPA · Angular · Mockito / JUnit
+  Playwright · Temporal
 
 <span class="yellow">Databases</span>
-  PostgreSQL · MySQL · MongoDB · Redis
+  PostgreSQL · MongoDB · EventStore
 
-<span class="yellow">DevOps & Cloud</span>
-  Docker · Kubernetes · GitHub Actions · GitLab CI
-  AWS · Linux
+<span class="yellow">Messaging & Events</span>
+  Kafka · EventStore · Temporal
 
-<span class="yellow">Tools</span>
-  Git · IntelliJ IDEA · Postman · SoapUI · Kafka
+<span class="yellow">Cloud & DevOps</span>
+  AWS · Google Cloud · Oracle Cloud · Jenkins · Docker
+  Agile / Scrum · SAFe
 
 `,
 
@@ -243,10 +491,12 @@ const COMMANDS = {
 <span class="section-title">Contact</span>
 <span class="grey">──────────────────────────────────────────</span>
 
+  <span class="yellow">Email</span>      →  <a href="mailto:ferreiragomes93@gmail.com">ferreiragomes93@gmail.com</a>
+  <span class="yellow">Phone</span>      →  +351 915 364 273
   <span class="yellow">LinkedIn</span>   →  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">linkedin.com/in/-joao-gomes</a>
   <span class="yellow">GitHub</span>     →  <a href="https://github.com/JottaGomes" target="_blank">github.com/JottaGomes</a>
 
-  <span class="dim">Best way to reach me is via LinkedIn.</span>
+  <span class="dim">Best way to reach me is via LinkedIn or Email.</span>
 
 `,
 
@@ -280,6 +530,14 @@ const COMMANDS = {
       history.map((c, i) => `  <span class="dim">${String(i + 1).padStart(3)}.</span>  ${c}`).join('\n') + '\n\n';
   },
 
+  'download-cv': () => {
+    const a = document.createElement('a');
+    a.href = './JoaoFGomesCV.pdf';
+    a.download = 'JoaoFGomesCV.pdf';
+    a.click();
+    return `\n  <span class="bright">↓ Downloading</span> <span class="yellow">JoaoFGomesCV.pdf</span>...\n\n`;
+  },
+
   banner: () => BANNER,
 
   clear: () => {
@@ -289,9 +547,8 @@ const COMMANDS = {
   },
 };
 
-// ── Rendering ─────────────────────────────────────────────────────────────────
+// ── Rendering ──────────────────────────────────────────────────────────────────
 
-// Typewriter: walks all text nodes in a container and reveals chars quickly
 function typeReveal(container, charsPerFrame) {
   const nodes = [];
   (function walk(n) {
@@ -336,14 +593,12 @@ function printLine(text) {
 function runCommand(raw) {
   const cmd = raw.trim().toLowerCase();
 
-  // Echo the input line
   if (cmd !== '') {
     printLine(`${PROMPT}<span class="white">${escHtml(raw)}</span>`);
   }
 
   if (cmd === '') return;
 
-  // Track history (avoid consecutive duplicates)
   if (history[history.length - 1] !== cmd) history.push(cmd);
   histIdx = history.length;
 
@@ -351,7 +606,7 @@ function runCommand(raw) {
     const result = COMMANDS[cmd]();
     if (result !== null) print(result);
   } else {
-    printLine(`\n  <span class="red">Command not found:</span> <span class="white">${escHtml(cmd)}</span>  — type <span class="bright">list</span> for available commands.\n`);
+    printLine(`\n  <span class="red">command not found:</span> <span class="white">${escHtml(cmd)}</span>  — type <span class="bright">list</span> for available commands.\n`);
   }
 }
 
@@ -359,7 +614,7 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Input handling ────────────────────────────────────────────────────────────
+// ── Input handling ─────────────────────────────────────────────────────────────
 
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
@@ -369,30 +624,35 @@ input.addEventListener('keydown', e => {
     runCommand(val);
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    if (histIdx > 0) {
-      histIdx--;
-      input.value = history[histIdx] || '';
-    }
+    if (histIdx > 0) { histIdx--; input.value = history[histIdx] || ''; }
   } else if (e.key === 'ArrowDown') {
     e.preventDefault();
-    if (histIdx < history.length - 1) {
-      histIdx++;
-      input.value = history[histIdx] || '';
-    } else {
-      histIdx = history.length;
-      input.value = '';
-    }
+    if (histIdx < history.length - 1) { histIdx++; input.value = history[histIdx] || ''; }
+    else { histIdx = history.length; input.value = ''; }
   }
 });
 
-// Click anywhere to focus input
 document.addEventListener('click', () => input.focus());
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Glitch trigger ─────────────────────────────────────────────────────────────
 
-bannerArea.innerHTML = BANNER;
-typeReveal(bannerArea, 5);
-input.focus();
+function triggerGlitch() {
+  const art = document.getElementById('banner-art');
+  if (art) {
+    art.classList.add('glitching');
+    setTimeout(() => art.classList.remove('glitching'), 500);
+  }
+  setTimeout(triggerGlitch, 5000 + Math.random() * 8000);
+}
+
+// ── Boot → Terminal ────────────────────────────────────────────────────────────
+
+function initTerminal() {
+  bannerArea.innerHTML = BANNER;
+  typeReveal(bannerArea, 5);
+  input.focus();
+  setTimeout(triggerGlitch, 4000 + Math.random() * 4000);
+}
 </script>
 </body>
 </html>
