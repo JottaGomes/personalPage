@@ -17,6 +17,7 @@
       font-size: 14px;
       height: 100vh;
       overflow: hidden;
+      overflow-x: hidden;
     }
 
     /* ── Matrix rain ── */
@@ -182,6 +183,16 @@
     /* ── Scrollbar hidden ── */
     ::-webkit-scrollbar { width: 0; }
     #terminal { scrollbar-width: none; }
+
+    /* ── Mobile ── */
+    @media (max-width: 700px) {
+      body { font-size: 12px; }
+      #terminal { padding: 16px 14px; }
+      .banner { font-size: 9px; line-height: 1.15; }
+      #boot-screen { padding: 24px 18px; }
+      .boot-line { font-size: 11px; }
+      .tagline { font-size: 10px; }
+    }
   </style>
 </head>
 <body>
@@ -317,6 +328,30 @@ const BANNER = `<span class="tagline">joaogomes.dev  Not A Corporation. Personal
 <span class="grey">────────────────────────────────────────────────────────────────────────────────────</span>
 <span class="white">  Software Engineer  ·  Portugal  ·  <a href="https://github.com/JottaGomes" target="_blank">GitHub</a>  ·  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">LinkedIn</a></span>
 <span class="grey">────────────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="white">  Type <span class="yellow">'list'</span> to see available commands.</span>
+
+`;
+
+const MOBILE_BANNER = `<span class="tagline">joaogomes.dev  Not A Corporation. Personal website. All knights reserved.</span>
+<span class="banner" id="banner-art">
+     ██╗ ██████╗  █████╗  ██████╗
+     ██║██╔═══██╗██╔══██╗██╔═══██╗
+     ██║██║   ██║███████║██║   ██║
+██   ██║██║   ██║██╔══██║██║   ██║
+╚█████╔╝╚██████╔╝██║  ██║╚██████╔╝
+ ╚════╝  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝
+ ██████╗  ██████╗ ███╗   ███╗███████╗███████╗
+██╔════╝ ██╔═══██╗████╗ ████║██╔════╝██╔════╝
+██║  ███╗██║   ██║██╔████╔██║█████╗  ███████╗
+██║   ██║██║   ██║██║╚██╔╝██║██╔══╝  ╚════██║
+╚██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗███████║
+ ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝ ®
+</span>
+<span class="grey">──────────────────────────────────</span>
+<span class="white">  Software Engineer  ·  Portugal</span>
+<span class="white">  <a href="https://github.com/JottaGomes" target="_blank">GitHub</a>  ·  <a href="https://www.linkedin.com/in/-joao-gomes/" target="_blank">LinkedIn</a></span>
+<span class="grey">──────────────────────────────────</span>
 
 <span class="white">  Type <span class="yellow">'list'</span> to see available commands.</span>
 
@@ -590,6 +625,7 @@ input.addEventListener('keydown', e => {
 });
 
 document.addEventListener('click', () => input.focus());
+document.addEventListener('touchend', () => input.focus());
 
 // ── Glitch trigger ─────────────────────────────────────────────────────────────
 
@@ -605,9 +641,10 @@ function triggerGlitch() {
 // ── Boot → Terminal ────────────────────────────────────────────────────────────
 
 function initTerminal() {
-  bannerArea.innerHTML = BANNER;
+  const isMobile = window.innerWidth < 700;
+  bannerArea.innerHTML = isMobile ? MOBILE_BANNER : BANNER;
   typeReveal(bannerArea, 5);
-  input.focus();
+  if (!isMobile) input.focus();
   setTimeout(triggerGlitch, 4000 + Math.random() * 4000);
 }
 </script>
